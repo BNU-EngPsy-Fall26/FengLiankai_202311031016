@@ -1,0 +1,348 @@
+/* ===========================================================================
+   theory.css —— 理论演示页：分布画布、指标面板、ROC 曲线、要点卡片
+   =========================================================================== */
+
+/* 每个视图的开头都统一成这个"页头"：
+   大标题 + 一句说明。给标题下加一道极淡的横向渐隐线，
+   把"标题区"与"内容区"分开 —— 但这道线与 .block__title 的橙色短划不同，
+   它不强调任何东西，只是收个边。 */
+.view-head {
+  margin-bottom: 26px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, var(--line), var(--line-soft) 55%, transparent) 1;
+}
+.view-head__title {
+  font-family: var(--font-cn);
+  font-size: 32px;
+  margin-bottom: 6px;
+  letter-spacing: .01em;
+}
+.view-head__desc {
+  font-size: 15px;
+  color: var(--ink-500);
+  max-width: 68em;
+  margin: 0;
+  line-height: 1.75;
+}
+.view-head__desc code {
+  font-size: 12.5px;
+  padding: 1px 6px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xs);
+  color: var(--brand-700);
+}
+
+/* ---------------------------------------------------------------------------
+   两行式布局：
+     第一行  .theory-row   判断标准（分布图） | ROC 曲线      —— 同一行联动
+     第二行  .panel--board d′/C 控制 + 全部数值横向铺开      —— 一屏可读完
+   列宽比例 2.3 : 1，配合画布 aspect-ratio，使两块画布高度天然相等
+   （左画布宽 = 行宽×2.3/3.3，高 = 宽/2.3 = 行宽/3.3 = 右列宽）。
+   --------------------------------------------------------------------------- */
+.theory-layout {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 30px;
+}
+.theory-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+@media (max-width: 1180px) { .theory-row { grid-template-columns: 1fr; } }
+
+.panel {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-sm);
+  overflow: hidden;
+}
+.panel__head {
+  padding: 13px 20px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--paper-sunk);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.panel__head h3 { font-size: 15px; }
+.panel__note { font-size: 11.5px; color: var(--ink-400); }
+/* 注释吃掉中间剩余空间：有开关时开关靠右，没有开关时注释自然贴到右侧 */
+.panel__head > .panel__note { margin-right: auto; }
+.panel__head--sub { border-top: 1px solid var(--line); }
+
+/* ---------------------------------------------------------------------------
+   操作指引条：这一页能拖能点，不写出来没人知道从哪里下手。
+   竖向堆叠会挤掉画布，所以横向铺开一行，窄屏自动换行。
+   --------------------------------------------------------------------------- */
+.howto {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+.howto li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--ink-500);
+  line-height: 1.5;
+}
+.howto__k {
+  flex: none;
+  padding: 2px 9px;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--accent-700);
+  background: var(--accent-100);
+  border: 1px solid var(--accent-300);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.panel--dist, .panel--roc { display: flex; flex-direction: column; }
+.panel--dist canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2.3 / 1;
+  padding: 0;
+}
+.panel--roc canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+}
+/* 窄屏时两块画布都不再强制等高，各自按内容比例显示 */
+@media (max-width: 1180px) {
+  .panel--dist canvas { aspect-ratio: 1.9 / 1; }
+}
+
+/* 面板标题右侧的小开关组（ROC 的两个开关放进 head，避免把行高撑开） */
+.head-tools {
+  display: flex;
+  align-items: center;
+  align-self: center;      /* 面板标题用 baseline 对齐，开关组改居中更稳 */
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.toggle--sm { font-size: 11.5px; gap: 7px; }
+.toggle--sm input { width: 30px; height: 17px; }
+.toggle--sm input::after { width: 13px; height: 13px; }
+.toggle--sm input:checked::after { transform: translateX(13px); }
+
+/* 控制区：d′ / C 并排，快捷标准独占一行铺满 */
+.board-controls {
+  padding: 13px 18px 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px 26px;
+  background: var(--paper-sunk);
+}
+@media (max-width: 660px) { .board-controls { grid-template-columns: 1fr; } }
+
+.control label {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-700);
+  margin-bottom: 4px;
+}
+.control label output {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--brand-700);
+}
+.control--c label output { color: var(--accent-700); }
+.control__hint {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  color: var(--ink-400);
+  line-height: 1.5;
+}
+
+/* 快捷标准：独占控制区的一整行，横向铺开 */
+.quick-c {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 2px;
+}
+.quick-c__label { font-size: 12.5px; font-weight: 600; color: var(--ink-500); }
+
+/* 指标网格：全部数值横向铺开（宽屏 6 列 × 2 行） */
+.metric-section__label {
+  margin: 0;
+  padding: 11px 18px 0;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--ink-700);
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+.metric-section__label span {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--ink-400);
+}
+.metric-grid {
+  padding: 9px 16px 15px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (max-width: 1180px) { .metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 760px)  { .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.metric-tile {
+  padding: 7px 11px 8px;
+  border: 1px solid var(--line-soft);
+  border-left: 3px solid var(--brand-500);
+  border-radius: var(--r-sm);
+  background: var(--paper-sunk);
+  min-width: 0;
+}
+.metric-tile__k {
+  font-size: 11.5px;
+  color: var(--ink-400);
+  display: block;
+  font-weight: 550;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.metric-tile__v {
+  font-family: var(--font-mono);
+  font-size: 16.5px;   /* 12 块横排时最宽的是 "-0.750 / -1.500"，16px 保证 6 列也不换行 */
+  font-weight: 700;
+  color: var(--brand-800);
+  line-height: 1.35;
+  display: block;
+  white-space: nowrap;
+}
+.metric-tile__sub { font-size: 11.5px; color: var(--ink-400); display: block; }
+.metric-tile--accent { border-left-color: var(--accent-500); }
+.metric-tile--accent .metric-tile__v { color: var(--accent-700); }
+.metric-tile--hit { border-left-color: var(--hit-500); background: var(--hit-100); border-color: #cfe8da; }
+.metric-tile--hit .metric-tile__v { color: var(--hit-700); }
+.metric-tile--miss { border-left-color: var(--miss-500); background: var(--miss-100); border-color: #ecd9b0; }
+.metric-tile--miss .metric-tile__v { color: var(--miss-700); }
+.metric-tile--fa { border-left-color: var(--fa-500); background: var(--fa-100); border-color: #efc9c3; }
+.metric-tile--fa .metric-tile__v { color: var(--fa-700); }
+.metric-tile--cr { border-left-color: var(--cr-500); background: var(--cr-100); border-color: #c8dbec; }
+.metric-tile--cr .metric-tile__v { color: var(--cr-700); }
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+  color: var(--ink-500);
+  cursor: pointer;
+  user-select: none;
+}
+.toggle input {
+  appearance: none;
+  width: 34px; height: 19px;
+  flex: none;
+  background: var(--ink-200);
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  transition: background .18s;
+}
+.toggle input::after {
+  content: "";
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 15px; height: 15px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: var(--sh-sm);
+  transition: transform .18s;
+}
+.toggle input:checked { background: var(--brand-600); }
+.toggle input:checked::after { transform: translateX(15px); }
+.toggle input:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 2px; }
+
+/* 要点卡片 */
+.lesson-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+.lesson {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 19px 21px 17px;
+  box-shadow: var(--sh-sm);
+}
+.lesson h4 {
+  font-size: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-cn);
+}
+.lesson__tag {
+  display: grid;
+  place-items: center;
+  width: 23px; height: 23px;
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--brand-600);
+  border-radius: 50%;
+}
+.lesson p { font-size: 13.5px; line-height: 1.78; color: var(--ink-500); }
+.lesson__formula {
+  font-family: var(--font-math);
+  font-size: 15px;
+  color: var(--brand-800);
+  background: var(--brand-050);
+  border: 1px solid var(--brand-100);
+  border-radius: var(--r-xs);
+  padding: 13px 14px 12px;
+  margin: 11px 0;
+  overflow-x: auto;
+}
+/* 公式下面那行小字注解（不属于公式本身，可以折行） */
+.lesson__cap {
+  display: block;
+  margin-top: 9px;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  color: var(--ink-400);
+  text-align: center;
+  white-space: normal;
+}
+.lesson__note {
+  font-size: 12.5px;
+  color: var(--ink-400);
+  border-top: 1px dashed var(--line);
+  padding-top: 9px;
+  margin: 10px 0 0;
+  line-height: 1.7;
+}
+
+@media (max-width: 760px) {
+  .view-head__title { font-size: 22px; }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .panel--dist canvas { aspect-ratio: 1.5 / 1; }
+  .head-tools { gap: 10px; }
+}

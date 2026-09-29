@@ -1,0 +1,270 @@
+/* ===========================================================================
+   device.css —— 跨设备运行层
+   ---------------------------------------------------------------------------
+   在 main.css / games.css / theory.css 之后加载，因此这里的同权重规则最后生效。
+   只做三件事，绝不改设计语言（配色、字号层级、圆角、阴影全部沿用既有令牌）：
+
+     ① 视口与安全区：100dvh（iOS 地址栏伸缩不再抖）、刘海与手势条的 env() 留白
+     ② 触控交互：命中区放大、双击缩放延迟消除、画布拖拽与页面滚动共存
+     ③ 窄屏/矮屏版式：不删内容，只换排布；宽内容（公式、表格）退化为横向滚动
+
+   原则：桌面端视觉零改动——所有"放大命中区"类的规则都锁在
+   (hover: none) and (pointer: coarse) 里，鼠标环境完全不受影响。
+   =========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   1. 视口与安全区
+   横向留白统一走 --gutter，再用 max() 与安全区取较大值：
+   竖屏手机 env() = 0 → 就是原来的 16px；横屏刘海机 env() = 44px → 自动让开。
+   --------------------------------------------------------------------------- */
+:root { --gutter: 28px; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;            /* 支持的浏览器用动态视口高度，地址栏收起时不跳 */
+  overscroll-behavior-y: none;   /* 橡皮筋/下拉刷新不要干扰画布上的手势 */
+}
+
+.app-header__inner,
+.app-main,
+.app-footer {
+  padding-left: max(var(--gutter), env(safe-area-inset-left));
+  padding-right: max(var(--gutter), env(safe-area-inset-right));
+}
+.app-footer {
+  /* 底部手势条（Home Indicator）压不到页脚文字 */
+  padding-bottom: calc(40px + env(safe-area-inset-bottom));
+}
+
+/* iOS Safari 上 background-attachment: fixed 会整屏重绘、滚动掉帧，触屏改回 scroll */
+@media (hover: none) {
+  body { background-attachment: scroll; }
+}
+
+canvas { max-width: 100%; }
+
+/* ---------------------------------------------------------------------------
+   2. 触控交互
+   --------------------------------------------------------------------------- */
+button, .btn, .pill, .seg__btn, .picker__card, .stepbar__item,
+input[type='range'], .toggle, a {
+  touch-action: manipulation;            /* 去掉双击缩放造成的 ~300ms 点击延迟 */
+  -webkit-tap-highlight-color: transparent;
+}
+.btn, .pill, .picker__card, .stepbar__item, .stage__plot {
+  -webkit-touch-callout: none;           /* 长按不弹系统菜单 */
+}
+
+/* 判定标准这幅图可以左右拖动。
+   pan-y：横向手势归画布（拖判据），纵向手势仍归页面（正常滚屏），
+   两者不打架——手机上既拖得动，也滑得走。 */
+.panel--dist canvas {
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 只有真·触屏才放大命中区（鼠标环境的视觉与原来完全一致） */
+@media (hover: none) and (pointer: coarse) {
+  .app-nav__btn { min-height: 42px; }
+  .seg__btn { min-height: 46px; }
+  .btn--lg { min-height: 50px; }
+  .btn--answer { min-height: 54px; font-size: 16px; }
+  .btn--tiny { min-height: 36px; padding-left: 14px; padding-right: 14px; }
+  .pill { min-height: 38px; padding: 6px 14px; }
+  .chip { min-height: 30px; }
+
+  /* 滑块手指也要抓得住：轨道与滑块整体放大一档 */
+  .range { height: 34px; }
+  .range::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; }
+  .range::-webkit-slider-thumb {
+    width: 26px; height: 26px; margin-top: -10px; border-width: 3px;
+  }
+  .range::-moz-range-track { height: 8px; border-radius: 4px; }
+  .range::-moz-range-thumb { width: 24px; height: 24px; border-width: 3px; }
+}
+
+/* ---------------------------------------------------------------------------
+   3. 宽内容的横向滚动兜底
+   公式行是 nowrap（不许断行），窄屏放不下时给它自己的滚动条，
+   而不是把公式挤断——排版规则不被破坏，内容也不丢。
+   --------------------------------------------------------------------------- */
+.formula,
+.lesson__formula,
+.formula-card__expr,
+.matrix-wrap,
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.formula__row { padding-bottom: 2px; }   /* 出现横向滚动条时不吃掉分数线 */
+
+@media (max-width: 720px) {
+  /* 2×2 结果矩阵四格都有说明文字，挤到 560px 以下就没法读了，改为横向滚动 */
+  .matrix { min-width: 560px; }
+}
+
+/* ---------------------------------------------------------------------------
+   4. 窄屏版式：沿用同一套卡片/网格语言，只把节奏压紧
+   --------------------------------------------------------------------------- */
+@media (max-width: 760px) {
+  :root { --gutter: 16px; }
+}
+
+@media (max-width: 560px) {
+  :root { --gutter: 14px; }
+
+  .app-header__inner { gap: 9px; padding-top: 10px; padding-bottom: 10px; }
+  .brand { gap: 10px; }
+  .brand__mark svg { width: 28px; height: 28px; }
+  .brand__text h1 { font-size: 16.5px; gap: 6px; }
+  .brand__sub { font-size: 11.5px; }
+  /* 导航改成了胶囊容器，窄屏把内边距与圆角一起收，
+     否则 5 个按钮 + 容器描边会顶破页头右缘 */
+  .app-nav { gap: 2px; padding: 2px; }
+  .app-nav__btn { padding: 7px 4px; font-size: 12.5px; }
+
+  .hero { padding: 20px 18px 22px; gap: 20px; margin-bottom: 24px; }
+  .hero__title { font-size: 22px; }
+  .hero__lead { font-size: 15px; }
+  .hero__actions { flex-direction: column; align-items: stretch; gap: 10px; }
+  .hero__visual-cap { font-size: 12.5px; }
+
+  .view-head { margin-bottom: 18px; }
+  .view-head__title { font-size: 22px; }
+  .view-head__desc { font-size: 15px; }
+  .block__title { font-size: 18px; }
+  .block__desc { font-size: 14px; }
+  .step { padding: 15px 16px 14px; }
+
+  .scene-brief { padding: 14px 16px 16px; font-size: 13px; }
+  .scene-brief__icon { width: 32px; height: 32px; }
+  .scene-brief__name { font-size: 15px; }
+
+  .howto { gap: 6px 12px; }
+  .howto li { font-size: 12px; }
+
+  /* 手机上图更"高"一点：390px 宽按 1.5:1 只剩 260px 高，
+     曲线主体被压得太扁，1.35:1 让绘图区多出约 30px 高度 */
+  .panel--dist canvas { aspect-ratio: 1.35 / 1; }
+}
+
+/* 超窄屏（320–400px，iPhone SE 竖屏 / 安卓小屏）：
+   各网格原本用 minmax(240–320px, 1fr)，容器不足这个下限时轨道会顶出可视区，
+   整页跟着左右晃。这里统一收成单列 minmax(0,1fr)——卡片语言不变，只是不再被下限卡住。 */
+@media (max-width: 400px) {
+  .lesson-grid,
+  .scenario-grid,
+  .picker,
+  .formula-grid,
+  .steps,
+  .setup__row,
+  .scene-slot,
+  .report__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  :root { --gutter: 12px; }
+  .metric-grid { gap: 7px; }
+  .metric-tile { padding: 6px 8px 7px; }
+  .chip { font-size: 11.5px; padding: 3px 8px; }
+  .hud__counter { font-size: 12px; }
+  .stepbar { padding: 7px 10px; }
+  .setup__hint { min-height: 0; }        /* 窄屏不再为对齐留空行 */
+  .tick-row { font-size: 10px; }
+}
+
+/* ---------------------------------------------------------------------------
+   5. 矮屏（手机横屏 / 分屏）
+   竖向留白整体收一档，保证"画布 + 判定栏"仍尽量落在同一屏内。
+   --------------------------------------------------------------------------- */
+@media (max-height: 560px) and (orientation: landscape) {
+  .app-header__inner { padding-top: 8px; padding-bottom: 8px; }
+  .app-main { padding-top: 16px; padding-bottom: 32px; }
+  .hero { padding: 18px 20px; margin-bottom: 18px; gap: 20px; }
+  .view-head { margin-bottom: 14px; }
+  .stage__plot { min-height: 150px; padding: 12px 14px 10px; }
+  .stage__rail { padding: 12px 14px 14px; }
+  /* 操作指引压缩成一行，但不删——横屏更缺的是竖向空间，不是操作提示 */
+  .howto { gap: 4px 12px; margin-bottom: 12px; }
+  .howto li { font-size: 11.5px; }
+}
+
+/* ---------------------------------------------------------------------------
+   6. 提示文案按输入方式切换
+   键盘提示（<kbd>Y</kbd>、← →）在手机上没有意义，换成"点按钮""拖动"的说法。
+   JS 也会给 <html> 加 .is-touch 作为兜底（某些安卓浏览器 hover 查询不可靠）。
+   --------------------------------------------------------------------------- */
+.touch-only { display: none !important; }
+
+@media (hover: none) and (pointer: coarse) {
+  .touch-only { display: inline-flex !important; }
+  .kbd-only { display: none !important; }
+  .btn--answer kbd,
+  .stage__scan kbd,
+  .howto kbd { display: none !important; }
+}
+
+html.is-touch .touch-only { display: inline-flex !important; }
+html.is-touch .kbd-only { display: none !important; }
+html.is-touch .btn--answer kbd,
+html.is-touch .stage__scan kbd { display: none !important; }
+
+/* "可左右滑动"的提示条：只在触屏出现，鼠标环境用滚动条就够了 */
+.scroll-hint {
+  display: none;
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--ink-400);
+}
+.scroll-hint::before { content: '↔ '; color: var(--ink-300); }
+@media (hover: none) and (pointer: coarse) {
+  .touch-only.scroll-hint { display: block !important; }
+}
+html.is-touch .touch-only.scroll-hint { display: block !important; }
+
+/* ---------------------------------------------------------------------------
+   6. 历史对比视图：导航多了一个按钮 + 表格很宽，窄屏要另算
+   --------------------------------------------------------------------------- */
+@media (max-width: 760px) {
+  /* 五个导航按钮在窄屏放不下：让导航条自己横向滚动，而不是把按钮压扁到读不出字。
+     导航本身是胶囊容器（圆角 999px），滚动时两端会"切"掉圆角 —— 补一层
+     左右内边距，并让容器允许内部溢出滚动而不撑破页头。 */
+  .app-header__inner { gap: 12px; }
+  .app-nav {
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+  }
+  .app-nav::-webkit-scrollbar { display: none; }
+  .app-nav__btn { flex: none; }
+
+  .runs-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .runs-compare { grid-template-columns: 1fr; }        /* 两列并排改成上下两块 */
+  .runs-toolbar__actions { margin-left: 0; width: 100%; }
+  .runs-toolbar__actions .btn { flex: 1; }
+}
+
+@media (max-width: 400px) {
+  .runs-stats { grid-template-columns: 1fr; }
+  .runs-table th,
+  .runs-table td { padding: 7px 8px; font-size: 12.5px; }
+}
+
+/* ---------------------------------------------------------------------------
+   7. 打印时触控提示一律不出现
+   --------------------------------------------------------------------------- */
+@media print {
+  .touch-only { display: none !important; }
+  .kbd-only { display: inline-flex !important; }
+}

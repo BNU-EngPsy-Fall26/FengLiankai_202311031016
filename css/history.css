@@ -1,0 +1,370 @@
+/* ===========================================================================
+   history.css —— 「历史对比」视图
+   多轮实验结果的保存与对比。主表三列主角：难度设定 / 实测 d′ / 判断标准 C，
+   用底色把 d′ 与 C 从十几列数字里拎出来，避免玩家在一片数字里找不着重点。
+   =========================================================================== */
+
+.runs-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---------- 顶部统计条 ---------- */
+.runs-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.runs-stat {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 13px 15px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: var(--sh-sm, 0 1px 2px rgba(16, 22, 29, .04));
+}
+
+.runs-stat b {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 650;
+  color: var(--brand-700);
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.runs-stat span {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-700);
+}
+
+.runs-stat small {
+  font-size: 11.5px;
+  color: var(--ink-400);
+  line-height: 1.4;
+}
+
+/* ---------- 工具条：筛选 / 排序 / 导出 ---------- */
+.runs-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px 20px;
+  padding: 14px 16px;
+  background: var(--paper-sunk);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.runs-toolbar__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.runs-toolbar__label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-400);
+}
+
+.runs-toolbar__actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.runs-sort {
+  appearance: none;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--ink-700);
+  padding: 8px 30px 8px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--paper)
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%2356636f' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>")
+    no-repeat right 10px center;
+  min-height: 38px;
+}
+
+.runs-sort:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 1px; }
+
+.runs-warn {
+  padding: 10px 14px;
+  border: 1px solid var(--accent-300);
+  background: var(--accent-100);
+  border-radius: var(--r-sm);
+  font-size: 12.5px;
+  color: var(--accent-700);
+}
+
+/* ---------- 轮次主表 ---------- */
+.runs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.runs-table th,
+.runs-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* 表头：压在纸灰底上。列名是 11.5px 的小字，用 ink-400 会低于 AA，
+   这里用 ink-500；主角列表头复用品牌色，与数据列的浅蓝底呼应。 */
+.runs-table th {
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--ink-500);
+  background: var(--ink-050);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.runs-table td:first-child,
+.runs-table th:first-child { text-align: center; }
+.runs-table td:nth-child(2),
+.runs-table td:nth-child(3),
+.runs-table td:nth-child(4) { text-align: left; }
+
+/* 主角列：实测 d′ 与实测 C
+   从十几列数字里"拎出来"靠的是底色差 + 字重差，不是加边框 ——
+   密排表格里再加框线会变得很吵。 */
+.runs-table th.is-key {
+  color: var(--brand-700);
+  background: var(--brand-100);
+}
+.runs-table td.is-key {
+  background: var(--brand-050);
+  color: var(--brand-800);
+}
+.runs-table td.is-key b { font-size: 15px; font-weight: 700; }
+
+.runs-table tbody tr:hover { background: var(--brand-050); }
+.runs-table tbody tr:hover td.is-key { background: var(--brand-100); }
+.runs-table tbody tr.is-picked { background: var(--brand-100); }
+.runs-table tbody tr.is-picked td.is-key { background: var(--brand-100); }
+/* 选中行左侧加一条品牌色实线，与底色一起表达"这行被勾了" */
+.runs-table tbody tr.is-picked td:first-child { box-shadow: inset 3px 0 0 var(--brand-500); }
+
+.runs-table__time {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink-500);
+}
+
+.runs-table__pick input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--brand-600);
+  cursor: pointer;
+}
+
+.runs-diff {
+  font-weight: 600;
+  color: var(--ink-700);
+}
+
+.runs-early {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink-400);
+}
+
+.runs-gap { font-weight: 650; font-family: var(--font-mono); }
+.runs-gap.is-good { color: var(--hit-700); }
+.runs-gap.is-bad { color: var(--fa-700); }
+
+.runs-note {
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--ink-400);
+  line-height: 1.6;
+}
+
+/* ---------- 空态 ---------- */
+.runs-empty__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.runs-tips {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--ink-500);
+  line-height: 1.65;
+}
+
+.runs-tips b { color: var(--ink-700); }
+
+/* ---------- 并排对比 ---------- */
+.runs-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.runs-compare__col {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px 14px 10px;
+  background: var(--paper);
+}
+
+.runs-compare__tag {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--brand-700);
+  letter-spacing: .04em;
+}
+
+.runs-compare__meta {
+  font-size: 11.5px;
+  color: var(--ink-400);
+  margin-bottom: 8px;
+}
+
+.runs-compare__list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.runs-compare__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--line-soft);
+  font-size: 12.5px;
+}
+
+.runs-compare__row:last-child { border-bottom: 0; }
+.runs-compare__row dt { color: var(--ink-500); }
+.runs-compare__row dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--ink-700);
+  font-variant-numeric: tabular-nums;
+}
+
+.runs-compare__row.is-key { background: var(--brand-050); border-radius: var(--r-xs); padding: 6px 8px; }
+.runs-compare__row.is-key dt { color: var(--brand-800); font-weight: 600; }
+.runs-compare__row.is-key dd { color: var(--brand-800); font-size: 13.5px; }
+
+/* ---------- 差值 ---------- */
+.runs-delta {
+  margin-top: 14px;
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper-sunk);
+}
+
+.runs-delta h4 {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--ink-700);
+}
+
+.runs-delta__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.runs-delta__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+
+.runs-delta__label {
+  font-size: 11.5px;
+  color: var(--ink-400);
+}
+
+.runs-delta__item b {
+  font-family: var(--font-mono);
+  font-size: 16.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 上升 / 下降不套用红绿，避免与"好坏"混淆：只区分方向与幅度 */
+.runs-delta__item.is-up b { color: var(--brand-600); }
+.runs-delta__item.is-down b { color: var(--accent-700); }
+.runs-delta__item.is-flat b { color: var(--ink-400); }
+
+.runs-delta__note {
+  margin: 11px 0 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink-500);
+}
+
+.runs-delta__note b { color: var(--ink-700); }
+
+.runs-compare__actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+/* ---------- 视图底部的读法说明 ---------- */
+.runs-help {
+  margin-top: 22px;
+}
+
+.runs-help__list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--ink-500);
+}
+
+.runs-help__list b { color: var(--ink-700); }
+
+.runs-help__note {
+  margin: 12px 0 0;
+  padding: 11px 14px;
+  background: var(--paper-sunk);
+  border-left: 3px solid var(--brand-300);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink-500);
+}
+
+.runs-help__note b { color: var(--ink-700); }
